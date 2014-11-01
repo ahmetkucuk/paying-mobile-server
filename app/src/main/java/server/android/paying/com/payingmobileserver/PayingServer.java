@@ -9,14 +9,24 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
 import java.sql.Connection;
 
 public class PayingServer implements Runnable {
@@ -112,25 +122,41 @@ public class PayingServer implements Runnable {
     }
 
     public String processRequest(String req){
-        String respond = "";
-        int type;
-
+        String responseString = "";
         JsonObject obj = (JsonObject)parser.parse(req);
 
-        type = obj.get("type").getAsInt();
+        int type = obj.get("type").getAsInt();
+        String tableid = obj.get("tableid").getAsString();
 
-        System.out.println("Type geldi: " + type);
         if ( type == 1)
         {
-            respond = "Ahmet veli";
-        }else
-            respond = "Alper cem";
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpResponse response = null;
+            try{
+                response = httpclient.execute(new HttpGet("http://192.168.1.7:9000/api/restaurant/detail/" + tableid));
+                StatusLine statusLine = response.getStatusLine();
+                if(statusLine.getStatusCode() == HttpStatus.SC_OK){
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    response.getEntity().writeTo(out);
+                    out.close();
+                    responseString = out.toString();
 
-        JsonObject resobj = new JsonObject();
+                }
+            } catch( Exception e){
+                e.printStackTrace();
+            }
+
+        }else{
+
+            // TODO TYPE 2
+        }
+
+
+        /*JsonObject resobj = new JsonObject();
         resobj.addProperty("restaurantName",req);
-        resobj.addProperty("totalAmount",1500);
+        resobj.addProperty("totalAmount",1500);*/
 
-        return gson.toJson(resobj);
+        return responseString;
 
     }
 
