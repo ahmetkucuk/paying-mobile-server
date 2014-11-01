@@ -4,11 +4,17 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.Connection;
@@ -16,6 +22,8 @@ import java.sql.Connection;
 public class PayingServer implements Runnable {
 
     private Socket connection;
+    public Gson gson = new GsonBuilder().create();
+    public JsonParser parser = new JsonParser();
 
     public static void startServer(int port, Context context){
         int count = 0;
@@ -65,12 +73,8 @@ public class PayingServer implements Runnable {
                 System.out.println("Before Character");
                 int character;
                 StringBuffer process = new StringBuffer();
-                int i = 10;
-                while ((character = isr.read()) != 13 && i > 0) {
+                while ((character = isr.read()) != 13 ) {
                     process.append((char) character);
-
-                    System.out.println("Char: " + (char)character);
-                    i--;
                 }
 
 
@@ -108,9 +112,25 @@ public class PayingServer implements Runnable {
     }
 
     public String processRequest(String req){
-        System.out.println("Request is being processed: " + req);
+        String respond = "";
+        int type;
 
-        return "Respond : " + req;
+        JsonObject obj = (JsonObject)parser.parse(req);
+
+        type = obj.get("type").getAsInt();
+
+        System.out.println("Type geldi: " + type);
+        if ( type == 1)
+        {
+            respond = "Ahmet veli";
+        }else
+            respond = "Alper cem";
+
+        JsonObject resobj = new JsonObject();
+        resobj.addProperty("restaurantName",req);
+        resobj.addProperty("totalAmount",1500);
+
+        return gson.toJson(resobj);
 
     }
 
