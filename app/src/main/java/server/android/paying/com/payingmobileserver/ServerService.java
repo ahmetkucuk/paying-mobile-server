@@ -11,9 +11,6 @@ import android.os.Message;
 import android.os.Process;
 import android.widget.Toast;
 
-
-
-
 public class ServerService extends Service {
     private Looper mServiceLooper;
     private ServiceHandler mServiceHandler;
@@ -41,14 +38,12 @@ public class ServerService extends Service {
         }
     }
 
-
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
         new ServerStartAsync().execute();
 
-        Toast.makeText(this, "server initalized", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "server initialized", Toast.LENGTH_SHORT).show();
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
        /* Message msg = mServiceHandler.obtainMessage();
@@ -60,10 +55,8 @@ public class ServerService extends Service {
     }
 
     public class ServerStartAsync extends AsyncTask<Void, Void, String> {
-
         @Override
         protected void onPreExecute() {
-
             super.onPreExecute();
         }
 
@@ -72,7 +65,6 @@ public class ServerService extends Service {
             PayingServer.startServer(9293, getApplicationContext());
             return "Server is ended";
         }
-
         @Override
         protected void onPostExecute(String s) {
             System.out.println(s);
@@ -92,11 +84,9 @@ public class ServerService extends Service {
 
     @Override
     public void onCreate() {
-
         HandlerThread thread = new HandlerThread("ServiceStartArguments",
                 Process.THREAD_PRIORITY_BACKGROUND);
         thread.start();
-
 
         mServiceLooper = thread.getLooper();
         mServiceHandler = new ServiceHandler(mServiceLooper);

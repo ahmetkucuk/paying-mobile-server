@@ -19,6 +19,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -55,7 +56,6 @@ public class PayingServer implements Runnable {
         } catch (Exception e) {
             System.out.println("Exception: " + e);
         }
-
     }
 
    static class HandleRequestAsync extends AsyncTask<Void, Void, String> {
@@ -87,7 +87,6 @@ public class PayingServer implements Runnable {
                     process.append((char) character);
                 }
 
-
                 String response = "Response is : " + process;
                 response += (char) 13;
 
@@ -116,7 +115,6 @@ public class PayingServer implements Runnable {
         }
     }
 
-
     PayingServer(Socket s, int i) {
         this.connection = s;
     }
@@ -124,37 +122,44 @@ public class PayingServer implements Runnable {
     public String processRequest(String req){
         String responseString = "";
         JsonObject obj = (JsonObject)parser.parse(req);
-
         int type = obj.get("type").getAsInt();
-        String tableid = obj.get("tableid").getAsString();
 
-        if ( type == 1)
-        {
-            HttpClient httpclient = new DefaultHttpClient();
-            HttpResponse response = null;
-            try{
+        HttpClient httpclient = new DefaultHttpClient();
+        HttpResponse response = null;
+        try{
+            if(type == 1) {
+                String tableid = obj.get("tableid").getAsString();
                 response = httpclient.execute(new HttpGet("http://192.168.1.7:9000/api/restaurant/detail/" + tableid));
                 StatusLine statusLine = response.getStatusLine();
-                if(statusLine.getStatusCode() == HttpStatus.SC_OK){
+                if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
                     response.getEntity().writeTo(out);
                     out.close();
                     responseString = out.toString();
 
                 }
-            } catch( Exception e){
-                e.printStackTrace();
             }
 
-        }else{
+            else if(type == 2){
+                String cardno = obj.get("cardno").getAsString();
+                String cardname = obj.get("cardname").getAsString();
+                String expiredate = obj.get("expiredate").getAsString();
+                String ccv = obj.get("ccv").getAsString();
+                String tableid = obj.get("tableid").getAsString();
+                String paidamount = obj.get("paidamount").getAsString();
 
-            // TODO TYPE 2
+                response = httpclient.execute((new HttpGet("http://192.168.1.7:9000/api" + cardno + cardname + expiredate + ccv + tableid + paidamount)));
+                StatusLine statusLine = response.getStatusLine();
+                if(statusLine.getStatusCode() == HttpStatus.SC_OK){
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    response.getEntity().writeTo(out);
+                    out.close();
+                    responseString = out.toString();
+                }
+            }
+        } catch( Exception e){
+            e.printStackTrace();
         }
-
-
-        /*JsonObject resobj = new JsonObject();
-        resobj.addProperty("restaurantName",req);
-        resobj.addProperty("totalAmount",1500);*/
 
         return responseString;
 
@@ -162,8 +167,7 @@ public class PayingServer implements Runnable {
 
     public void run() {
         try {
-            BufferedInputStream is = new BufferedInputStream(
-                    connection.getInputStream());
+            BufferedInputStream is = new BufferedInputStream(connection.getInputStream());
             InputStreamReader isr = new InputStreamReader(is,"UTF-8");
             int character;
             StringBuffer process = new StringBuffer();
@@ -173,7 +177,6 @@ public class PayingServer implements Runnable {
 
             String response = processRequest(process.toString());
             response += (char) 13;
-
 
             BufferedOutputStream os = new BufferedOutputStream(
                     connection.getOutputStream());
@@ -189,5 +192,4 @@ public class PayingServer implements Runnable {
             }
         }
     }
-
 }
