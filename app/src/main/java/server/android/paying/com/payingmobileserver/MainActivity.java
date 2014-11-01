@@ -4,17 +4,22 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
+
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
 
 public class MainActivity extends Activity implements WifiP2pManager.ChannelListener, WifiP2pManager.PeerListListener {
 
@@ -28,6 +33,20 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
     private BroadcastReceiver receiver = null;
 
     private final IntentFilter intentFilter = new IntentFilter();
+
+    @Override
+    protected void onPause(){
+        unregisterReceiver(receiver);
+        super.onPause();
+    }
+
+
+    @Override
+    protected void onDestroy(){
+        Intent intent = new Intent(this, ServerService.class);
+        stopService(intent);
+        super.onDestroy();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +72,7 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
 
     public void onClickDiscover(View view) {
 
-        progressDialog = ProgressDialog.show(MainActivity.this, "on Click Discover",
+        /*progressDialog = ProgressDialog.show(MainActivity.this, "on Click Discover",
                 "nothing", true, true
                 //                        new DialogInterface.OnCancelListener() {
                 //
@@ -76,8 +95,33 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
                 Toast.makeText(MainActivity.this, "Discovery Failed : " + reasonCode,
                         Toast.LENGTH_SHORT).show();
             }
-        });
+        });*/
+        new SendRequestAsyncTask().execute();
 
+
+    }
+
+    class SendRequestAsyncTask extends AsyncTask<Void, Void, String> {
+
+        @Override
+        protected void onPreExecute() {
+
+            Toast.makeText(MainActivity.this, "Client starting", Toast.LENGTH_SHORT).show();
+
+            super.onPreExecute();
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            return PayingClient.sendRequest("192.168.1.8",9293, "hehshs");
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            Toast.makeText(MainActivity.this, "Response is: " + s, Toast.LENGTH_SHORT).show();
+        }
     }
 
 
@@ -90,7 +134,7 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
 
     public void onClickConnect(View view) {
 
-        if(device != null) {
+       /* if(device != null) {
 
 
             WifiP2pConfig config = new WifiP2pConfig();
@@ -112,7 +156,9 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
             connect(config);
         } else {
             Toast.makeText(MainActivity.this, "Device is null", Toast.LENGTH_SHORT).show();
-        }
+        }*/
+        Intent intent = new Intent(this, ServerService.class);
+        startService(intent);
     }
 
     public void onClickStartServer(View view) {
@@ -136,6 +182,8 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
                         Toast.LENGTH_SHORT).show();
             }
         });
+
+
 
     }
 
@@ -170,6 +218,7 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
                         Toast.LENGTH_SHORT).show();
             }
         });
+
     }
 
     @Override
