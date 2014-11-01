@@ -12,23 +12,18 @@ import com.google.gson.JsonParser;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URL;
-import java.sql.Connection;
 
 public class PayingServer implements Runnable {
 
@@ -123,32 +118,34 @@ public class PayingServer implements Runnable {
         String responseString = "";
         JsonObject obj = (JsonObject)parser.parse(req);
         int type = obj.get("type").getAsInt();
-
+        System.out.println("Gelen mesaj: " + req);
         HttpClient httpclient = new DefaultHttpClient();
         HttpResponse response = null;
         try{
             if(type == 1) {
-                String tableid = obj.get("tableid").getAsString();
-                response = httpclient.execute(new HttpGet("http://192.168.1.7:9000/api/restaurant/detail/" + tableid));
+                String tableid = obj.get("tableId").getAsString();
+                response = httpclient.execute(new HttpGet("http://192.168.1.26:9000/api/restaurant/detail/" + tableid));
                 StatusLine statusLine = response.getStatusLine();
                 if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
                     response.getEntity().writeTo(out);
                     out.close();
                     responseString = out.toString();
-
                 }
             }
 
             else if(type == 2){
-                String cardno = obj.get("cardno").getAsString();
-                String cardname = obj.get("cardname").getAsString();
-                String expiredate = obj.get("expiredate").getAsString();
-                String ccv = obj.get("ccv").getAsString();
-                String tableid = obj.get("tableid").getAsString();
-                String paidamount = obj.get("paidamount").getAsString();
+                JsonObject card = obj.get("creditCard").getAsJsonObject();
+                String cardNumber = card.get("cardNumber").getAsString();
+                String userName = card.get("userName").getAsString();
+                String expireDate = card.get("expireDate").getAsString();
+                String ccv = card.get("ccv").getAsString();
+                String tableId = obj.get("tableId").getAsString();
+                Double amountToPay = obj.get("amountToPay").getAsDouble();
 
-                response = httpclient.execute((new HttpGet("http://192.168.1.7:9000/api" + cardno + cardname + expiredate + ccv + tableid + paidamount)));
+                response = httpclient.execute((new HttpGet("http://192.168.1.26:9000/api/restaurant/cardPayment?" +
+                        "cardNumber="+ cardNumber + "&userName?=" + userName + "&expireDate=" + expireDate + "&ccv=" + ccv +
+                                "&tableId=" + tableId + "&amountToPay=" + amountToPay)));
                 StatusLine statusLine = response.getStatusLine();
                 if(statusLine.getStatusCode() == HttpStatus.SC_OK){
                     ByteArrayOutputStream out = new ByteArrayOutputStream();

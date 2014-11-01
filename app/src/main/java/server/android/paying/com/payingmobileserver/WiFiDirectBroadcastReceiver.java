@@ -35,7 +35,7 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
             // asynchronous call and the calling activity is notified with a
             // callback on PeerListListener.onPeersAvailable()
             if (manager != null) {
-                manager.requestPeers(channel, activity);
+               manager.requestPeers(channel, activity);
             }
             Log.d(MainActivity.TAG, "P2P peers changed");
         }

@@ -13,6 +13,7 @@ import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -57,7 +58,7 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
 
         manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
-        channel = manager.initialize(this, getMainLooper(), null);
+        channel = manager.initialize(this, getMainLooper(), MainActivity.this);
     }
 
     @Override
@@ -68,7 +69,20 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
     }
 
     public void onClickDiscover(View view) {
-        new SendRequestAsyncTask().execute();
+        manager.removeGroup(channel, new WifiP2pManager.ActionListener() {
+
+            @Override
+            public void onFailure(int reasonCode) {
+                Log.d(TAG, "Disconnect failed. Reason :" + reasonCode);
+
+            }
+
+            @Override
+            public void onSuccess() {
+            }
+
+        });
+       // new SendRequestAsyncTask().execute();
     }
 
     class SendRequestAsyncTask extends AsyncTask<Void, Void, String> {
