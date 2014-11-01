@@ -1,5 +1,6 @@
 package server.android.paying.com.payingmobileserver;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.widget.Toast;
 
@@ -16,7 +17,7 @@ public class PayingServer implements Runnable {
 
     private Socket connection;
 
-    public static void startServer(int port){
+    public static void startServer(int port, Context context){
         int count = 0;
         try {
 
@@ -31,20 +32,25 @@ public class PayingServer implements Runnable {
                 Runnable runnable = new PayingServer(connection, ++count);
                 Thread thread = new Thread(runnable);
                 thread.start();
+                //new HandleRequestAsync(connection, context).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }
         } catch (Exception e) {
+            System.out.println("Exception: " + e);
         }
 
     }
 
-   /* static class HandleRequestAsync extends AsyncTask<Void, Void, String> {
+   static class HandleRequestAsync extends AsyncTask<Void, Void, String> {
         Socket connection;
-        public HandleRequestAsync(Socket conn){
+       private Context context;
+        public HandleRequestAsync(Socket conn, Context context){
             this.connection = conn;
+            this.context = context;
         }
         @Override
         protected void onPreExecute() {
 
+            Toast.makeText(context, "on Pre Execute", Toast.LENGTH_SHORT).show();
             super.onPreExecute();
         }
 
@@ -52,14 +58,21 @@ public class PayingServer implements Runnable {
         protected String doInBackground(Void... params) {
 
             try {
+                System.out.println("after try");
                 BufferedInputStream is = new BufferedInputStream(
                         connection.getInputStream());
                 InputStreamReader isr = new InputStreamReader(is,"UTF-8");
+                System.out.println("Before Character");
                 int character;
                 StringBuffer process = new StringBuffer();
-                while ((character = isr.read()) != 13) {
+                int i = 10;
+                while ((character = isr.read()) != 13 && i > 0) {
                     process.append((char) character);
+
+                    System.out.println("Char: " + (char)character);
+                    i--;
                 }
+
 
                 String response = "Response is : " + process;
                 response += (char) 13;
@@ -85,8 +98,9 @@ public class PayingServer implements Runnable {
         protected void onPostExecute(String s) {
             System.out.println(s);
             super.onPostExecute(s);
+            Toast.makeText(context, s, Toast.LENGTH_SHORT).show();
         }
-    }*/
+    }
 
 
     PayingServer(Socket s, int i) {
@@ -110,6 +124,7 @@ public class PayingServer implements Runnable {
             while ((character = isr.read()) != 13) {
                 process.append((char) character);
             }
+
             String response = processRequest(process.toString());
             response += (char) 13;
 
