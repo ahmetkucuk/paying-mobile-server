@@ -14,15 +14,34 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+
+import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Type;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
+import java.util.List;
 
 public class MainActivity extends Activity implements WifiP2pManager.ChannelListener, WifiP2pManager.PeerListListener {
 
@@ -64,6 +83,8 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
 
         manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         channel = manager.initialize(this, getMainLooper(), MainActivity.this);
+
+        new getTablesAsyncTask().execute();
     }
 
     @Override
@@ -73,21 +94,49 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
         registerReceiver(receiver, intentFilter);
     }
 
-    public void onClickDiscover(View view) {
-        manager.removeGroup(channel, new WifiP2pManager.ActionListener() {
+    class getTablesAsyncTask extends AsyncTask<Void, Void, List<Table>> {
+        @Override
+        protected void onPreExecute() {
 
-            @Override
-            public void onFailure(int reasonCode) {
-                Log.d(TAG, "Disconnect failed. Reason :" + reasonCode);
+            super.onPreExecute();
+        }
 
+        @Override
+        protected List<Table> doInBackground(Void... params) {
+            String responseString = "";
+            HttpClient httpclient = new DefaultHttpClient();
+            HttpResponse response = null;
+            try {
+                response = httpclient.execute(new HttpGet(
+                        "http://192.168.1.8:9000/api/restaurant/tables"));
+                StatusLine statusLine = response.getStatusLine();
+                if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    response.getEntity().writeTo(out);
+                    out.close();
+                    responseString = out.toString();
+                    System.out.println("Get tables response : " + responseString);
+                } else
+                    System.out.println("Get tables OK gelmedi");
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+            Type tableCollectionType = new TypeToken<List<Table>>() {
+            }.getType();
+            JsonObject firstElement = (JsonObject) new JsonParser()
+                    .parse(responseString);
+            List<Table> tables = new Gson().fromJson(
+                    firstElement.getAsJsonArray("tables"), tableCollectionType);
 
-            @Override
-            public void onSuccess() {
-            }
 
-        });
-       // new SendRequestAsyncTask().execute();
+            return tables;
+        }
+
+        @Override
+        protected void onPostExecute(List<Table> list) {
+            tablesListView.setAdapter(new TableListViewAdapter(MainActivity.this, R.layout.tables_listview, list));
+            super.onPostExecute(list);
+        }
     }
 
     class SendRequestAsyncTask extends AsyncTask<Void, Void, String> {
@@ -115,35 +164,6 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
         return true;
     }
 
-    public void onClickConnect(View view) {
-        Intent intent = new Intent(this, ServerService.class);
-        startService(intent);
-    }
-
-    public void onClickStartServer(View view) {
-        manager.createGroup(channel, new WifiP2pManager.ActionListener() {
-
-            @Override
-            public void onSuccess() {
-                // TODO Auto-generated method stub
-
-                Toast.makeText(MainActivity.this, "Create Group on Success",
-                        Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onFailure(int reason) {
-                // TODO Auto-generated method stub
-
-                Toast.makeText(MainActivity.this, "Create Group on Fail",
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
-
-    }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -152,6 +172,44 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
         int id = item.getItemId();
         if (id == R.id.action_settings) {
             return true;
+        } else if(id == R.id.create_group) {
+            manager.createGroup(channel, new WifiP2pManager.ActionListener() {
+
+                @Override
+                public void onSuccess() {
+                    // TODO Auto-generated method stub
+
+                    Toast.makeText(MainActivity.this, "Create Group on Success",
+                            Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onFailure(int reason) {
+                    // TODO Auto-generated method stub
+
+                    Toast.makeText(MainActivity.this, "Create Group on Fail",
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+
+        } else if(id == R.id.stop_server) {
+            manager.removeGroup(channel, new WifiP2pManager.ActionListener() {
+
+                @Override
+                public void onFailure(int reasonCode) {
+                    Log.d(TAG, "Disconnect failed. Reason :" + reasonCode);
+
+                }
+
+                @Override
+                public void onSuccess() {
+                }
+
+            });
+
+        } else if(id == R.id.start_server) {
+            Intent intent = new Intent(this, ServerService.class);
+            startService(intent);
         }
         return super.onOptionsItemSelected(item);
     }

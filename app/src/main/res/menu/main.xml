@@ -1,6 +1,20 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity" >
+
+    <item android:id="@+id/create_group"
+        android:title="@string/create_group"
+        android:orderInCategory="100"
+        android:showAsAction="never" />
+    <item android:id="@+id/stop_server"
+        android:title="@string/stop_discover"
+        android:orderInCategory="100"
+        android:showAsAction="never" />
+    <item android:id="@+id/start_server"
+        android:title="@string/start_server"
+        android:orderInCategory="100"
+        android:showAsAction="never" />
+
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="100"

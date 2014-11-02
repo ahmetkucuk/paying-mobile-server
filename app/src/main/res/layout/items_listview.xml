@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:weightSum="100"
+    android:layout_margin="@dimen/activity_vertical_margin"
+    android:layout_width="match_parent"
+    android:layout_gravity="center_vertical"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:layout_weight="40"
+        android:textStyle="bold"
+        android:text="Elma"
+        android:id="@+id/item_name"/>
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="20"
+        android:textSize="16sp"
+        android:gravity="center"
+        android:text="X 20"
+        android:id="@+id/item_quantity"/>
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="right"
+        android:textSize="20sp"
+        android:layout_weight="40"
+        android:text="30 TL"
+        android:id="@+id/item_price"/>
+
+</LinearLayout>
