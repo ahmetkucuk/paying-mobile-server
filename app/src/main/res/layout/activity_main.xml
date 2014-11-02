@@ -29,5 +29,11 @@
             android:onClick="onClickConnect"
             android:text="Connect"/>
     </LinearLayout>
+    <ListView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/table_list_listview">
+
+        </ListView>
 
 </RelativeLayout>

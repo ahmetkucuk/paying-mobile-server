@@ -62,7 +62,7 @@ public class ServerService extends Service {
 
         @Override
         protected String doInBackground(Void... params) {
-            PayingServer.startServer(2124, getApplicationContext());
+            PayingServer.startServer(2125, getApplicationContext());
             return "Server is ended";
         }
         @Override

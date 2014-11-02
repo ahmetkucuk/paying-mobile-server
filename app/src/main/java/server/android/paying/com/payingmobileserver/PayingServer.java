@@ -30,6 +30,36 @@ public class PayingServer implements Runnable {
     private Socket connection;
     public Gson gson = new GsonBuilder().create();
     public JsonParser parser = new JsonParser();
+    public static JsonParser staticparser = new JsonParser();
+
+    public static void processConn(Socket connection){
+        try {
+            BufferedInputStream is = new BufferedInputStream(connection.getInputStream());
+            InputStreamReader isr = new InputStreamReader(is,"UTF-8");
+            int character;
+            StringBuffer process = new StringBuffer();
+            while ((character = isr.read()) != 13) {
+                process.append((char) character);
+            }
+
+            String response = processRequestStatic(process.toString());
+            response += (char) 13;
+
+            BufferedOutputStream os = new BufferedOutputStream(
+                    connection.getOutputStream());
+            OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
+            osw.write(response);
+            osw.flush();
+        } catch (Exception e) {
+            System.out.println(e);
+        } finally {
+            try {
+                connection.close();
+            } catch (IOException e) {
+            }
+        }
+    }
+
 
     public static void startServer(int port, Context context){
         int count = 0;
@@ -43,9 +73,10 @@ public class PayingServer implements Runnable {
                 System.out.println("Request geldi");
                 //new HandleRequestAsync(connection).execute();
                 System.out.println("Paralel çalışıyor");
-                Runnable runnable = new PayingServer(connection, ++count);
+                processConn(connection);
+                /*Runnable runnable = new PayingServer(connection, ++count);
                 Thread thread = new Thread(runnable);
-                thread.start();
+                thread.start();*/
                 //new HandleRequestAsync(connection, context).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }
         } catch (Exception e) {
@@ -53,62 +84,6 @@ public class PayingServer implements Runnable {
         }
     }
 
-   static class HandleRequestAsync extends AsyncTask<Void, Void, String> {
-        Socket connection;
-       private Context context;
-        public HandleRequestAsync(Socket conn, Context context){
-            this.connection = conn;
-            this.context = context;
-        }
-        @Override
-        protected void onPreExecute() {
-
-            Toast.makeText(context, "on Pre Execute", Toast.LENGTH_SHORT).show();
-            super.onPreExecute();
-        }
-
-        @Override
-        protected String doInBackground(Void... params) {
-
-            try {
-                System.out.println("after try");
-                BufferedInputStream is = new BufferedInputStream(
-                        connection.getInputStream());
-                InputStreamReader isr = new InputStreamReader(is,"UTF-8");
-                System.out.println("Before Character");
-                int character;
-                StringBuffer process = new StringBuffer();
-                while ((character = isr.read()) != 13 ) {
-                    process.append((char) character);
-                }
-
-                String response = "Response is : " + process;
-                response += (char) 13;
-
-                System.out.println("Responsee: " + response);
-                BufferedOutputStream os = new BufferedOutputStream(
-                        connection.getOutputStream());
-                OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
-                osw.write(response);
-                osw.flush();
-            } catch (Exception e) {
-                System.out.println(e);
-            } finally {
-                try {
-                    connection.close();
-                } catch (IOException e) {
-                }
-            }
-            return "Success";
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            System.out.println(s);
-            super.onPostExecute(s);
-            Toast.makeText(context, s, Toast.LENGTH_SHORT).show();
-        }
-    }
 
     PayingServer(Socket s, int i) {
         this.connection = s;
@@ -123,27 +98,31 @@ public class PayingServer implements Runnable {
         HttpResponse response = null;
         try{
             if(type == 1) {
+                System.out.println("Type 1");
                 String tableid = obj.get("tableId").getAsString();
-                response = httpclient.execute(new HttpGet("http://192.168.1.26:9000/api/restaurant/detail/" + tableid));
+                response = httpclient.execute(new HttpGet("http://192.168.1.8:9000/api/restaurant/detail/" + tableid));
                 StatusLine statusLine = response.getStatusLine();
                 if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
                     response.getEntity().writeTo(out);
                     out.close();
                     responseString = out.toString();
-                }
+                    System.out.println("Type 1 response: " + responseString);
+                }else
+                    System.out.println("TYPe 1 OK GELMEDI");
             }
 
             else if(type == 2){
                 JsonObject card = obj.get("creditCard").getAsJsonObject();
                 String cardNumber = card.get("cardNumber").getAsString();
                 String userName = card.get("userName").getAsString();
+                userName = userName.replace(" ","%20");
                 String expireDate = card.get("expireDate").getAsString();
                 String ccv = card.get("ccv").getAsString();
                 String tableId = obj.get("tableId").getAsString();
                 Double amountToPay = obj.get("amountToPay").getAsDouble();
 
-                response = httpclient.execute((new HttpGet("http://192.168.1.26:9000/api/restaurant/cardPayment?" +
+                response = httpclient.execute((new HttpGet("http://192.168.1.8:9000/api/restaurant/cardPayment?" +
                         "cardNumber="+ cardNumber + "&userName?=" + userName + "&expireDate=" + expireDate + "&ccv=" + ccv +
                                 "&tableId=" + tableId + "&amountToPay=" + amountToPay)));
                 StatusLine statusLine = response.getStatusLine();
@@ -152,6 +131,7 @@ public class PayingServer implements Runnable {
                     response.getEntity().writeTo(out);
                     out.close();
                     responseString = out.toString();
+                    System.out.println(responseString);
                 }
             }
         } catch( Exception e){
@@ -161,6 +141,64 @@ public class PayingServer implements Runnable {
         return responseString;
 
     }
+
+
+       public static String processRequestStatic(String req){
+           String responseString = "";
+           JsonObject obj = (JsonObject)staticparser.parse(req);
+           int type = obj.get("type").getAsInt();
+           System.out.println("Gelen mesaj: " + req);
+           HttpClient httpclient = new DefaultHttpClient();
+           HttpResponse response = null;
+           try{
+               if(type == 1) {
+                   System.out.println("TYPE 1");
+                   String tableid = obj.get("tableId").getAsString();
+                   response = httpclient.execute(new HttpGet("http://192.168.1.8:9000/api/restaurant/detail/" + tableid));
+                   StatusLine statusLine = response.getStatusLine();
+                   if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
+                       ByteArrayOutputStream out = new ByteArrayOutputStream();
+                       response.getEntity().writeTo(out);
+                       out.close();
+                       responseString = out.toString();
+                       System.out.println("TYPE 1 response : " + responseString);
+                   } else
+                       System.out.println("TYPE 1 OK GELMEDI");
+               }
+
+               else if(type == 2){
+                   System.out.println("TYPE 2");
+                   JsonObject card = obj.get("creditCard").getAsJsonObject();
+                   String cardNumber = card.get("cardNumber").getAsString();
+                   String userName = card.get("userName").getAsString();
+                   userName = userName.replace(" ","%20");
+                   String expireDate = card.get("expireDate").getAsString();
+                   String ccv = card.get("ccv").getAsString();
+                   String tableId = obj.get("tableId").getAsString();
+                   Double amountToPay = obj.get("amountToPay").getAsDouble();
+                    String stat = "http://192.168.1.8:9000/api/restaurant/cardPayment?" +
+                            "cardNumber="+ cardNumber + "&userName=" + userName + "&expireDate=" + expireDate + "&ccv=" + ccv +
+                            "&tableId=" + tableId + "&amountToPay=" + amountToPay;
+                   System.out.println("Yollanacak statement: " + stat);
+                   response = httpclient.execute((new HttpGet(stat)));
+                   StatusLine statusLine = response.getStatusLine();
+                   if(statusLine.getStatusCode() == HttpStatus.SC_OK){
+                       ByteArrayOutputStream out = new ByteArrayOutputStream();
+                       response.getEntity().writeTo(out);
+                       out.close();
+                       responseString = out.toString();
+                       System.out.println(responseString);
+                       System.out.println("TYPE 2 response: " + responseString);
+                   }else
+                       System.out.println("TYPE 2 OK GELMEDI");
+               }
+           } catch( Exception e){
+               e.printStackTrace();
+           }
+
+           return responseString;
+
+       }
 
     public void run() {
         try {

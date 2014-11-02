@@ -17,6 +17,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.BaseAdapter;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import java.net.Inet4Address;
@@ -29,6 +31,7 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
     private WifiP2pManager.Channel channel;
     private WifiP2pDevice device;
     ProgressDialog progressDialog;
+    private ListView tablesListView;
 
     private BroadcastReceiver receiver = null;
 
@@ -51,6 +54,8 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        tablesListView = (ListView)findViewById(R.id.table_list_listview);
 
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
