@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TableLayout
+        android:layout_width="fill_parent"
+        android:layout_marginLeft="@dimen/activity_vertical_margin"
+        android:layout_height="wrap_content">
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:weightSum="10">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="4"
+                android:text="Tutar: " />
+
+            <TextView
+                android:id="@+id/amount_textview"
+                android:layout_height="wrap_content"
+                android:layout_weight="6"
+                android:width="0dp" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:weightSum="10">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="4"
+                android:text="Odenen: " />
+
+            <TextView
+                android:id="@+id/amount_paid_textview"
+                android:layout_height="wrap_content"
+                android:layout_weight="6"
+                android:width="0dp" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:weightSum="10">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="4"
+                android:text="Kalan: " />
+
+            <TextView
+                android:id="@+id/amount_will_be_paid_textview"
+                android:layout_height="wrap_content"
+                android:layout_weight="6"
+                android:width="0dp" />
+
+        </TableRow>
+    </TableLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:textSize="16sp"
+        android:layout_margin="@dimen/activity_vertical_margin"
+        android:textStyle="bold"
+        android:textColor="@android:color/darker_gray"
+        android:text="@string/items"
+        android:layout_height="wrap_content" />
+
+
+    <ListView
+        android:layout_width="fill_parent"
+        android:id="@+id/item_listview"
+        android:layout_margin="@dimen/activity_vertical_margin"
+        android:layout_height="wrap_content"></ListView>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/activity_vertical_margin"
+        android:layout_gravity="center_horizontal"
+        android:text="Tamam"
+        android:id="@+id/button_ok" />
+
+</LinearLayout>

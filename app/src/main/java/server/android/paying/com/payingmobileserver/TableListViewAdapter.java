@@ -41,7 +41,10 @@ public class TableListViewAdapter extends ArrayAdapter<Table> {
             final TextView totalAmount = (TextView) convertView
                     .findViewById(R.id.total_amount);
 
-            holder = new ViewHolder(tableID, totalAmount);
+            final TextView amountPaid = (TextView) convertView
+                    .findViewById(R.id.amount_paid);
+
+            holder = new ViewHolder(tableID, totalAmount, amountPaid);
 
             convertView.setTag(holder);
 
@@ -50,6 +53,10 @@ public class TableListViewAdapter extends ArrayAdapter<Table> {
         }
         holder.tableID.setText("Masa - " + values.get(position).getId());
         holder.totalAmount.setText( values.get(position).getTotalAmount() + " TL");
+        if(values.get(position).getPaidAmount() > 0)
+            holder.amountPaid.setText( "-"  + values.get(position).getPaidAmount() + " TL");
+        else
+            holder.amountPaid.setText( values.get(position).getPaidAmount() + " TL");
 
         return convertView;
     }
@@ -57,10 +64,12 @@ public class TableListViewAdapter extends ArrayAdapter<Table> {
 
         public final TextView tableID;
         public final TextView totalAmount;
+        public final TextView amountPaid;
 
-        public ViewHolder(TextView tableID, TextView totalAmount) {
+        public ViewHolder(TextView tableID, TextView totalAmount, TextView amountPaid) {
             this.tableID = tableID;
             this.totalAmount = totalAmount;
+            this.amountPaid = amountPaid;
         }
     }
 }

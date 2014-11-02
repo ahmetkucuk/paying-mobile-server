@@ -1,6 +1,7 @@
 package server.android.paying.com.payingmobileserver;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -19,8 +20,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -84,7 +90,47 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
         manager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
         channel = manager.initialize(this, getMainLooper(), MainActivity.this);
 
-        new getTablesAsyncTask().execute();
+        tablesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                showAddCardDialog( (Table)parent.getItemAtPosition(position));
+            }
+        });
+
+        new getTablesAsyncTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
+    public void showAddCardDialog(Table table) {
+        final Dialog dialog = new Dialog(MainActivity.this);
+        dialog.setContentView(R.layout.dialog_item_list);
+        dialog.setTitle("Masa Detayi");
+        //colorAlertDialogTitle(dialog, Color.RED);
+
+        final ListView itemListView = (ListView)dialog.findViewById(R.id.item_listview);
+        final Button buttonOk = (Button)dialog.findViewById(R.id.button_ok);
+
+        final TextView amountTextView = (TextView)dialog.findViewById(R.id.amount_textview);
+        final TextView paidTextView = (TextView) dialog.findViewById(R.id.amount_paid_textview);
+        final TextView tobePaidTextView = (TextView)dialog.findViewById(R.id.amount_will_be_paid_textview);
+
+        amountTextView.setText(table.getTotalAmount() + " TL");
+        paidTextView.setText(table.getPaidAmount() + " TL");
+        tobePaidTextView.setText((table.getTotalAmount()-table.getPaidAmount()) + " TL");
+
+        List<Item> itemList = table.getItemList();
+        itemListView.setAdapter(new ItemListViewAdapter(MainActivity.this, R.layout.items_listview, itemList));
+
+        buttonOk.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+
+        dialog.show();
+        Window window = dialog.getWindow();
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     @Override
@@ -94,7 +140,7 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
         registerReceiver(receiver, intentFilter);
     }
 
-    class getTablesAsyncTask extends AsyncTask<Void, Void, List<Table>> {
+    class getTablesAsyncTask extends AsyncTask<Void, List<Table>, Void> {
         @Override
         protected void onPreExecute() {
 
@@ -102,7 +148,31 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
         }
 
         @Override
-        protected List<Table> doInBackground(Void... params) {
+        protected Void doInBackground(Void... params) {
+
+            while (true) {
+
+                publishProgress(getTableListFromServer());
+
+                try {
+
+                    Thread.sleep(3000);
+
+                }
+                catch (Exception e)
+                {
+                    System.out.println(e);
+                }
+            }
+        }
+
+        @Override
+        protected void onProgressUpdate(List<Table>... values) {
+            tablesListView.setAdapter(new TableListViewAdapter(MainActivity.this, R.layout.tables_listview, values[0]));
+            super.onProgressUpdate(values);
+        }
+
+        public List<Table> getTableListFromServer() {
             String responseString = "";
             HttpClient httpclient = new DefaultHttpClient();
             HttpResponse response = null;
@@ -127,22 +197,14 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
                     .parse(responseString);
             List<Table> tables = new Gson().fromJson(
                     firstElement.getAsJsonArray("tables"), tableCollectionType);
-
-
             return tables;
-        }
 
-        @Override
-        protected void onPostExecute(List<Table> list) {
-            tablesListView.setAdapter(new TableListViewAdapter(MainActivity.this, R.layout.tables_listview, list));
-            super.onPostExecute(list);
         }
     }
 
     class SendRequestAsyncTask extends AsyncTask<Void, Void, String> {
         @Override
         protected void onPreExecute() {
-            Toast.makeText(MainActivity.this, "Client starting", Toast.LENGTH_SHORT).show();
             super.onPreExecute();
         }
 
@@ -154,7 +216,6 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            Toast.makeText(MainActivity.this, "Response is: " + s, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -178,17 +239,14 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
                 @Override
                 public void onSuccess() {
                     // TODO Auto-generated method stub
-
-                    Toast.makeText(MainActivity.this, "Create Group on Success",
-                            Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Kanal Olusturuldu", Toast.LENGTH_SHORT).show();
                 }
 
                 @Override
                 public void onFailure(int reason) {
                     // TODO Auto-generated method stub
+                    Toast.makeText(MainActivity.this, "Hata: Kanal olusturulamadi", Toast.LENGTH_SHORT).show();
 
-                    Toast.makeText(MainActivity.this, "Create Group on Fail",
-                            Toast.LENGTH_SHORT).show();
                 }
             });
 
@@ -203,6 +261,7 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
 
                 @Override
                 public void onSuccess() {
+                    Toast.makeText(MainActivity.this, "Gurup Kaldirildi.", Toast.LENGTH_SHORT).show();
                 }
 
             });
@@ -225,6 +284,7 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
             @Override
             public void onSuccess() {
                 // WiFiDirectBroadcastReceiver will notify us. Ignore for now.
+                Toast.makeText(MainActivity.this, "Baglandi.", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -240,13 +300,41 @@ public class MainActivity extends Activity implements WifiP2pManager.ChannelList
     public void onPeersAvailable(WifiP2pDeviceList peers) {
 
 
-        Toast.makeText(MainActivity.this, "askdfhaskdjhf", Toast.LENGTH_SHORT).show();
         if(peers.getDeviceList().size() > 0) {
-            Toast.makeText(MainActivity.this, "onPeersAvailable", Toast.LENGTH_SHORT).show();
             device = (WifiP2pDevice)peers.getDeviceList().toArray()[0];
         }
         if(progressDialog != null && progressDialog.isShowing()) {
             progressDialog.dismiss();
+        }
+    }
+
+    class CheckAccountBalanceAsyncTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+
+            while (true) {
+
+                try {
+
+                    Thread.sleep(3000);
+
+                }
+                catch (Exception e)
+                {
+                    System.out.println(e);
+                }
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
         }
     }
 }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ing_color">#FF6600</color>
+    <color name="ing_color_lighter">#ffff8109</color>
+    <color name="ing_color_darker">#ffff5a08</color>
+</resources>
